@@ -1,7 +1,8 @@
 package lesson1.Marathon;
 
 public class Course {
-    Obstacle [] course;
+    private Obstacle [] course;
+
     public Course (Obstacle... a) {
         course = a;
     }

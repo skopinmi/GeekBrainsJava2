@@ -1,18 +1,22 @@
 package lesson1.Marathon;
 
 public class Team {
+
     private String nameTeam;
     private Competitor [] teamFourPerson;
 /*
     Конструктор только для 4-х участников
  */
+
     public Team (String nameTeam, Competitor a, Competitor b, Competitor c, Competitor d) {
         this.nameTeam = nameTeam;
         teamFourPerson = new Competitor[]{a, b, c, d};
     }
+
 /*
     Вывод только прошедших дистанцию
  */
+
     public void infoWhoWin() {
         System.out.println("Имя команды " + nameTeam);
         System.out.println("Прошли дистанцию: ");
@@ -27,10 +31,11 @@ public class Team {
  */
     public void showResult () {
         System.out.println("Имя команды: " + nameTeam);
-        for (Competitor a: teamFourPerson) {
+        for (Competitor a : teamFourPerson) {
             a.info();
         }
     }
+
 
     public Competitor[] getTeamFourPerson() {
         return teamFourPerson;
@@ -47,4 +52,5 @@ public class Team {
 //        }
 //        return copy;
 //    }
+
 }
