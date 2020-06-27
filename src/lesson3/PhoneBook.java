@@ -46,7 +46,7 @@ class PhoneBookTest {
 
  */
         phoneBook.get("Person1");
-        phoneBook.get("Person2");
+        phoneBook.get("Person420");
         phoneBook.get("Person3");
         phoneBook.get("Person4");
     }
