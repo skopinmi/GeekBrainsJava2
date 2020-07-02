@@ -5,11 +5,17 @@ import java.util.Arrays;
 public class HomeWork {
     public static void main(String[] args) {
         float[] array = createArray(10000000);
+        System.out.println("Выполнение задачи в 1 потоке.");
         method1(array);
-        System.out.println("--------");
+        System.out.println("\n");
+        System.out.println("Деление задачи на 2 потока. ");
         method2(array);
-        System.out.println("--------");
-        method3(array, 10);
+        System.out.println(" \n");
+        System.out.println("Деление задачи на N потоков с учетом разбиения массива на N количество одинаковых.");
+        method3(array, 4);
+        System.out.println(" \n");
+
+
     }
 
     public static float [] createArray (int size) {
@@ -25,7 +31,9 @@ public class HomeWork {
         }
         System.out.println("Method 1 time = " + (System.currentTimeMillis() - t));
     }
-
+/*
+    далее пошла эволюция многопоточного решения этой задачи!
+ */
     public static void method2 (float [] array ) {
         long t = System.currentTimeMillis();
         int halfOfArray = array.length / 2;
@@ -35,6 +43,9 @@ public class HomeWork {
         System.arraycopy(array, halfOfArray - 1, array2, 0, array2.length);
         System.out.println("first part of method 2 = " + (System.currentTimeMillis() - t));
         long time = System.currentTimeMillis();
+/*
+        код венесен в отдельный метод создание 1 потока с вычислением - makeThread(float array);
+ */
 //        Thread t1 = new Thread(new Runnable() {
 //            @Override
 //            public void run() {
@@ -53,8 +64,15 @@ public class HomeWork {
 //        });
 //        t1.start();;
 //        t2.start();;
-        makeThread(array1);
-        makeThread(array2);
+/*
+        создано 2 потока
+ */
+        try {
+            makeThread(array1);
+            makeThread(array2);
+        } catch (InterruptedException e) {
+            System.out.println(e);
+        }
 
         System.out.println("second part of method 2 = " + (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
@@ -64,8 +82,10 @@ public class HomeWork {
 
         System.out.println("Method 2 time= " + (System.currentTimeMillis() - t));
     }
-
-    private static void makeThread (float [] array) {
+/*
+    запуск потока для вычисления
+ */
+    private static void makeThread (float [] array) throws InterruptedException {
         Thread t1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -76,8 +96,13 @@ public class HomeWork {
             }
         });
         t1.start();
+        t1.join();
     }
-
+/*
+    многопоточное вычисление
+    можно делить 1 массив на различное количество равнозначных подмассивов и запускать соответствующее
+    количество потоков
+ */
     public static void method3 (float [] array, int number ) {
         long t = System.currentTimeMillis();
         float[][] arrayOfArrays = null;
@@ -90,7 +115,11 @@ public class HomeWork {
         long time = System.currentTimeMillis();
 
         for (float[] arrayOfArray : arrayOfArrays) {
-            makeThread(arrayOfArray);
+            try {
+                makeThread(arrayOfArray);
+            } catch (InterruptedException e) {
+                System.out.println(e);
+            }
         }
         System.out.println("second part of method 3 = " + (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
@@ -98,7 +127,11 @@ public class HomeWork {
         System.out.println("third part of method 3 = " + (System.currentTimeMillis() - time));
         System.out.println("Method 3 time= " + (System.currentTimeMillis() - t));
     }
-
+/*
+    деление одного массива на N количество равных массивов
+    при невозможности разделить на равные части выбрасывает исключение
+    возвращает результат в 2-х мерном массиве
+ */
     private static float [][] splitArray (float[] array , int number) throws Exception {
         float [][] resultOfArray;
         resultOfArray = new float[number][];
@@ -112,6 +145,10 @@ public class HomeWork {
         }
         return resultOfArray;
     }
+/*
+    сшивает все маасивы (размеры не важны) из 2-х мерного в один массив
+    возвращает последний
+ */
     private static float [] arrayFromArrays (float[][] array) {
         int size = 0;
         for (int i = 0; i < array.length; i++) {
@@ -120,11 +157,8 @@ public class HomeWork {
         float [] resultArray = new float[size];
         int start = 0;
         for (int i = 0; i < array.length; i++) {
-            int finish = start + array[i].length;
-            System.out.println(finish);
-            System.arraycopy(array[i], 0, resultArray, start, finish);
-            start = finish;
-            System.out.println(start);
+            System.arraycopy(array[i], 0, resultArray, start, array[i].length);
+            start +=  array[i].length;
         }
         return resultArray;
     }
