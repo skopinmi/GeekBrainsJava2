@@ -3,19 +3,33 @@ package Lesson5;
 import java.util.Arrays;
 
 public class HomeWork {
+
+    static final int SIZE = 10000000;
+
     public static void main(String[] args) {
-        float[] array = createArray(10000000);
+
+        float[] array =  createArray(SIZE);
         System.out.println("Выполнение задачи в 1 потоке.");
         method1(array);
         System.out.println("\n");
+
+        float[] array1 = createArray(SIZE);
         System.out.println("Деление задачи на 2 потока. ");
-        method2(array);
-        System.out.println(" \n");
-        System.out.println("Деление задачи на N потоков с учетом разбиения массива на N количество одинаковых.");
-        method3(array, 4);
+        method2(array1);
         System.out.println(" \n");
 
+        float[] array2 = createArray(SIZE);
+        int n1 = 10;
+        System.out.println("Деление задачи на N = " + n1 + " потоков с учетом разбиения массива на N " +
+                "количество одинаковых.");
+        method3(array2, n1);
+        System.out.println(" \n");
 
+        float[] array3 = createArray(SIZE);
+        int n2 = 36;
+        System.out.println("Деление задачи на N = " + n2 + " потоков с учетом разбиения массива на " + (n2 - 1) +
+                        " количество одинаковых и один с остатками данных.");
+        method4(array3, 11);
     }
 
     public static float [] createArray (int size) {
@@ -33,6 +47,7 @@ public class HomeWork {
     }
 /*
     далее пошла эволюция многопоточного решения этой задачи!
+    наделал исключений с обработкой - для вычисления ошибок с соответствием размеров массивов
  */
     public static void method2 (float [] array ) {
         long t = System.currentTimeMillis();
@@ -102,6 +117,12 @@ public class HomeWork {
     многопоточное вычисление
     можно делить 1 массив на различное количество равнозначных подмассивов и запускать соответствующее
     количество потоков
+    делит массив методом private static float [][] splitArray (float[] array , int number) throws Exception
+    последний требует доработки - делит только на равные части, при отсутствии возможности выбрасывает исключение
+    измерял скорость выполния в 3-х частях
+    деление на подмассивы
+    вычисления в потоках
+    объединение массивов
  */
     public static void method3 (float [] array, int number ) {
         long t = System.currentTimeMillis();
@@ -123,7 +144,13 @@ public class HomeWork {
         }
         System.out.println("second part of method 3 = " + (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
-        float[] arraysFromArrays = arrayFromArrays(arrayOfArrays);
+
+        try {
+            arrayFromArrays(arrayOfArrays, array);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
         System.out.println("third part of method 3 = " + (System.currentTimeMillis() - time));
         System.out.println("Method 3 time= " + (System.currentTimeMillis() - t));
     }
@@ -132,7 +159,7 @@ public class HomeWork {
     при невозможности разделить на равные части выбрасывает исключение
     возвращает результат в 2-х мерном массиве
  */
-    private static float [][] splitArray (float[] array , int number) throws Exception {
+    public static float [][] splitArray (float[] array , int number) throws Exception {
         float [][] resultOfArray;
         resultOfArray = new float[number][];
         if (array.length % number == 0) {
@@ -146,20 +173,94 @@ public class HomeWork {
         return resultOfArray;
     }
 /*
-    сшивает все маасивы (размеры не важны) из 2-х мерного в один массив
-    возвращает последний
+    сшивает все масивы (размеры не важны) из 2-х мерного в один массив
  */
-    private static float [] arrayFromArrays (float[][] array) {
-        int size = 0;
-        for (int i = 0; i < array.length; i++) {
-            size += array[i].length;
+    public static void arrayFromArrays (float[][] arrays, float [] array) throws Exception {
+        int i = 0;
+        for (float[] a : arrays) {
+            i += a.length;
         }
-        float [] resultArray = new float[size];
+        if (i != array.length) {
+            throw new Exception("Несоответствие размеров массивов в аргументах метода");
+        }
+
         int start = 0;
-        for (int i = 0; i < array.length; i++) {
-            System.arraycopy(array[i], 0, resultArray, start, array[i].length);
-            start +=  array[i].length;
+        for (float[] floats : arrays) {
+            System.arraycopy(floats, 0, array, start, floats.length);
+            start += floats.length;
         }
-        return resultArray;
+    }
+
+/*
+      деление одного массива на N - 1 количество равных массивов и один с остатком
+      возвращает результат в 2-х мерном массиве
+      выбрасывает исключение при размере массива меньше N
+*/
+    public static float [][] splitArray2 (float[] array , int number) throws Exception {
+        float[][] resultOfArray;
+        resultOfArray = new float[number][];
+        if (array.length < number) {
+            throw new Exception("Размер массива меньше " + number);
+        }
+        if (array.length % number == 0) {
+            for (int i = 0; i < number; i++) {
+                resultOfArray[i] = new float[array.length / number];
+                System.arraycopy(array, i * array.length / number, resultOfArray[i], 0, resultOfArray[i].length);
+            }
+        } else {
+            boolean doIt = true;
+            int i = 1;
+            while (doIt){
+                i++;
+                if ((array.length - i) % (number - 1) == 0) {
+                    for (int ii = 0; ii < number - 1; ii++) {
+                        resultOfArray[ii] = new float[(array.length - i)/ (number - 1)];
+                        System.arraycopy(array, ii * array.length / number, resultOfArray[ii],
+                                0, resultOfArray[ii].length);
+                    }
+                    resultOfArray[number - 1] = new float[i];
+                    System.arraycopy(array, array.length - i, resultOfArray[number - 1], 0, i);
+                    doIt = false;
+                }
+            }
+        }
+        return resultOfArray;
+    }
+/*
+       многопоточное вычисление код тот же что и метод 3 , но делит массив
+       методом private static float [][] splitArray2 (float[] array , int number)
+       можно делить 1 массив на N - 1 количество равнозначных подмассивов  и один массив с остальными данными
+       и запускать N количество потоков для вычисления
+       по сути дублирование кода method 3, но несколько изменена логика
+*/
+    public static void method4 (float [] array, int number ) {
+        long t = System.currentTimeMillis();
+        float[][] arrayOfArrays = null;
+        try {
+            arrayOfArrays = splitArray2(array, number);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        System.out.println("first part of method 4 = " + (System.currentTimeMillis() - t));
+        long time = System.currentTimeMillis();
+
+        for (float[] arrayOfArray : arrayOfArrays) {
+            try {
+                makeThread(arrayOfArray);
+            } catch (InterruptedException e) {
+                System.out.println(e);
+            }
+        }
+        System.out.println("second part of method 4 = " + (System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
+
+        try {
+            arrayFromArrays(arrayOfArrays, array);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        System.out.println("third part of method 4 = " + (System.currentTimeMillis() - time));
+        System.out.println("Method 4 time= " + (System.currentTimeMillis() - t));
     }
 }
